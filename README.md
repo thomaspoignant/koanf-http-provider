@@ -103,6 +103,10 @@ Once an `ETag` is known, `ReadBytes` sends `If-None-Match`. On a `304` it return
 - **In containers, the cache only survives a restart if it is on a persistent volume.** On an ephemeral filesystem, the fallback only helps within the lifetime of a single container.
 - Headers such as `Authorization` are sent with every request. Use an `https://` URL.
 
+## Releases
+
+Versions, tags and `CHANGELOG.md` are managed by [release-please](https://github.com/googleapis/release-please). It reads [conventional commit](https://www.conventionalcommits.org/) messages on `main` (`feat:`, `fix:`, …), so use them in PR titles.
+
 ## License
 
 [MIT](LICENSE)
