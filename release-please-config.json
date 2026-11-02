@@ -4,7 +4,8 @@
     ".": {
       "release-type": "go",
       "bump-minor-pre-major": true,
-      "include-v-in-tag": true
+      "include-v-in-tag": true,
+      "release-as": "0.0.1"
     }
   }
 }
