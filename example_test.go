@@ -39,6 +39,7 @@ func Example() {
 		}
 		if err := k.Load(p, yaml.Parser()); err != nil {
 			log.Printf("config reload failed: %v", err)
+			p.Invalidate() // retry on the next poll, even if the content is unchanged
 		}
 	}); err != nil {
 		log.Fatal(err)

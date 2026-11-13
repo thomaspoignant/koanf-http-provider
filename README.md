@@ -48,6 +48,7 @@ if err := p.Watch(func(_ any, err error) {
 	}
 	if err := k.Load(p, yaml.Parser()); err != nil {
 		log.Printf("config reload failed: %v", err)
+		p.Invalidate() // retry on the next poll, even if the content is unchanged
 	}
 }); err != nil {
 	log.Fatal(err)
@@ -92,6 +93,16 @@ Once an `ETag` is known, `ReadBytes` sends `If-None-Match`. On a `304` it return
 - **Content changed and valid:** the cache is updated, then `cb(nil, nil)` is called. Reload with `k.Load` at this point.
 - **Content changed but invalid:** `cb(nil, err)`. The last good version stays current.
 - **Content unchanged** (same sha256): nothing happens.
+
+**`Invalidate()`** tells the provider that you could not apply the config it delivered, for example because `k.Load` or your own apply step failed. The provider can't detect that on its own. After `Invalidate`:
+
+- The next fetch skips `If-None-Match` and the sha256 comparison. `Watch` calls `cb(nil, nil)` on the next poll, even if the content hasn't changed. `ReadBytes` returns the fetched bytes.
+- Fetch errors, validation errors and cache fallbacks keep the retry pending. Once a fetch succeeds, ETag and sha256 deduplication resume.
+- The in-memory copy and the cache file are kept, so the fallback still works.
+- It doesn't fetch anything or call `cb` itself; the next poll or `ReadBytes` does the retry. Repeated calls result in one retry. It's safe to call from a `Watch` callback, before the first load, and after `Unwatch`.
+- A `ReadBytes` already in flight when `Invalidate` is called returns an error rather than the result of its older request. Responses to such older poll requests are dropped.
+
+Call `Invalidate` on the same provider, wherever the apply error is observed, even if you reload asynchronously.
 
 `Unwatch()` stops polling and cancels any in-flight request. It is safe to call more than once.
 
